@@ -32,7 +32,7 @@ if(TRUE){
   library(udpipe)
   x <- setNames(strsplit(crandb$text, " "), crandb$Package)
   x <- sapply(x, FUN=function(x) paste(x, collapse = "\n"))
-  x <- udpipe(x, "english-ewt", tokeniser = "vertical", parser = "none", trace = 500)
+  x <- udpipe(x, "english-ewt", udpipe_model_repo = "jwijffels/udpipe.models.ud.2.3", tokeniser = "vertical", parser = "none", trace = 500)
   x <- paste.data.frame(x, term = "lemma", group = "doc_id", sep = " ")
   crandb <- merge(crandb, x[, c("doc_id", "lemma")], 
                   by.x = "Package", by.y = "doc_id", all.x = TRUE, all.y = FALSE, order = FALSE)
