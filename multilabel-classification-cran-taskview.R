@@ -3,6 +3,7 @@ library(ctv)
 library(data.table)
 library(ruimtehol)
 library(tokenizers)
+library(stopwords)
 ##
 ## Get to which task views each R package belongs (one package can belong to several task views)
 ##
@@ -21,19 +22,18 @@ cran_taskviews <- cran_taskviews[, list(Taskviews = paste(Taskview, collapse = "
 ##
 crandb <- CRAN_package_db()
 crandb <- merge(crandb, cran_taskviews, by = "Package", all.x=TRUE, all.y=FALSE)
-crandb$target <- ifelse(is.na(crandb$Taskviews), "None", crandb$Taskviews)
-crandb$target <- strsplit(crandb$target, "&")
-crandb$text <- paste(crandb$Title, crandb$Description, sep = "\n")
-crandb$text <- tokenize_words(crandb$text, lowercase = TRUE, strip_punct = TRUE, strip_numeric = TRUE, 
-                              stopwords = stopwords::stopwords(language = "en", source = "snowball"))
-crandb$text <- sapply(crandb$text, FUN=function(x) paste(x, collapse = " "))
+crandb$target <- strsplit(crandb$Taskviews, "&")
+crandb$text   <- paste(crandb$Title, crandb$Description, sep = "\n")
+crandb$text   <- tokenize_words(crandb$text, lowercase = TRUE, strip_punct = TRUE, strip_numeric = TRUE, 
+                                stopwords = stopwords::stopwords(language = "en", source = "snowball"))
+crandb$text   <- sapply(crandb$text, FUN=function(x) paste(x, collapse = " "))
 if(TRUE){
   ## optional - lemmatise with udpipe (version >= 0.8.1) - note this takes some time 
   library(udpipe)
   x <- setNames(strsplit(crandb$text, " "), crandb$Package)
   x <- sapply(x, FUN=function(x) paste(x, collapse = "\n"))
   x <- udpipe(x, "english-ewt", udpipe_model_repo = "jwijffels/udpipe.models.ud.2.3", tokeniser = "vertical", parser = "none", trace = 500)
-  x <- paste.data.frame(x, term = "lemma", group = "doc_id", sep = " ")
+  x <- paste.data.frame(x, term = "lemma", group = "doc_id", collapse = " ")
   crandb <- merge(crandb, x[, c("doc_id", "lemma")], 
                   by.x = "Package", by.y = "doc_id", all.x = TRUE, all.y = FALSE, order = FALSE)
 }else{
